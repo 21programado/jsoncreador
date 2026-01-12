@@ -3,22 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSON Creator Pro - FIXED</title>
+<title>JSON Creator Pro</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Segoe UI,Tahoma;background:#f8fafc;padding:20px}
 .container{max-width:1200px;margin:auto;background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
-.toolbar{display:flex;gap:10px;margin-bottom:20px;padding:12px;background:#f1f5f9;border-radius:8px;border:1px solid #e2e8f0}
+.toolbar{display:flex;gap:10px;margin-bottom:20px;padding:12px;background:#f1f5f9;border-radius:8px;border:1px solid #e2e8f0;align-items:center}
 .btn{padding:8px 12px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;color:#fff}
 .btn-blue{background:#2563eb}
 .btn-green{background:#16a34a}
 .btn-purple{background:#8b5cf6}
 .btn-red{background:#ef4444}
+.btn-gray{background:#64748b}
 .content{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:900px){.content{grid-template-columns:1fr}}
 .panel{border:1px solid #e2e8f0;border-radius:8px;padding:15px}
-pre{background:#1e293b;color:#f8fafc;padding:20px;border-radius:8px;height:100%;overflow:auto}
+pre{background:#1e293b;color:#f8fafc;padding:20px;border-radius:8px;height:100%;overflow:auto;min-height:200px}
 .row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
 .indent{margin-left:24px;border-left:2px solid #e2e8f0;padding-left:15px;margin-bottom:10px}
 input{padding:6px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px}
@@ -27,12 +28,14 @@ input{padding:6px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px}
 .del-btn{background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8}
 .del-btn:hover{color:#ef4444}
 .inner-nav{margin-top:8px;display:flex;gap:6px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 <div class="container">
     <div id="topToolbar" class="toolbar"></div>
+
     <div class="content">
         <div class="panel">
             <h3>Estructura Visual</h3>
@@ -44,6 +47,8 @@ input{padding:6px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px}
         </div>
     </div>
 </div>
+
+<input type="file" id="fileInput" accept=".json" class="hidden">
 
 <script>
 const app = {
@@ -81,10 +86,14 @@ const app = {
                     <button class="btn btn-green" onclick="app.setInitial('array')" style="margin-left:10px">[ ] Array</button>
                 </div>`;
             bar.innerHTML = "Inicializa la estructura";
-            out.textContent = "null";
+            out.textContent = "";
         } else {
-            bar.innerHTML = this.btns([]);
-            bar.innerHTML += `<button class="btn btn-red" onclick="app.reset()" style="margin-left:auto">Reiniciar</button>`;
+            bar.innerHTML = `
+                ${this.btns([])}
+                <button class="btn btn-gray" onclick="app.download()">⬇ Descargar JSON</button>
+                <button class="btn btn-purple" onclick="app.import()">⬆ Importar JSON</button>
+                <button class="btn btn-red" onclick="app.reset()" style="margin-left:auto">Reiniciar</button>
+            `;
             editor.innerHTML = this.ui(this.data, []);
             out.textContent = JSON.stringify(this.data, null, 2);
         }
@@ -100,71 +109,6 @@ const app = {
     },
 
     add(type, ep){
-        const path = JSON.parse(decodeURIComponent(ep));
-        const t = this.resolvePath(path);
+        const t = this.resolvePath(JSON.parse(decodeURIComponent(ep)));
         const val = type === "object" ? {} : type === "array" ? [] : "valor";
-
-        if(Array.isArray(t)) t.push(val);
-        else t["clave_" + (Object.keys(t).length + 1)] = val;
-
-        this.render();
-    },
-
-    updateVal(ep, k, v){
-        const t = this.resolvePath(JSON.parse(decodeURIComponent(ep)));
-        if(v === "true") v = true;
-        else if(v === "false") v = false;
-        else if(!isNaN(v) && v.trim() !== "") v = Number(v);
-        t[k] = v;
-        this.render();
-    },
-
-    updateKey(ep, o, n){
-        if(o === n) return;
-        const t = this.resolvePath(JSON.parse(decodeURIComponent(ep)));
-        t[n] = t[o];
-        delete t[o];
-        this.render();
-    },
-
-    remove(ep, k){
-        const t = this.resolvePath(JSON.parse(decodeURIComponent(ep)));
-        Array.isArray(t) ? t.splice(Number(k),1) : delete t[k];
-        this.render();
-    },
-
-    ui(obj, path){
-        let h = "";
-        const isArr = Array.isArray(obj);
-        const ep = encodeURIComponent(JSON.stringify(path));
-
-        for(let k in obj){
-            const v = obj[k];
-            h += `<div class="row">`;
-            if(isArr) h += `<span style="width:30px">[${k}]</span>`;
-            else h += `<input class="key-input" value="${k}" onchange="app.updateKey('${ep}','${k}',this.value)">`;
-
-            if(v && typeof v === "object"){
-                h += `<button class="del-btn" onclick="app.remove('${ep}','${k}')">×</button></div>`;
-                h += `<div class="indent">${this.ui(v,[...path,k])}<div class="inner-nav">${this.btns([...path,k])}</div></div>`;
-            } else {
-                h += `<input class="val-input" value="${v}" onchange="app.updateVal('${ep}','${k}',this.value)">`;
-                h += `<button class="del-btn" onclick="app.remove('${ep}','${k}')">×</button></div>`;
-            }
-        }
-        return h;
-    },
-
-    reset(){
-        if(confirm("¿Borrar todo?")){
-            this.data = null;
-            localStorage.removeItem("json_builder");
-            this.render();
-        }
-    }
-};
-
-app.init();
-</script>
-</body>
-</html>
+        Array.i
