@@ -3,44 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Creator Pro - Nivel Experto</title>
+    <title>JSON Creator - Estructuras Complejas</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #edf2f7; }
-        .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; font-size: 13px; transition: 0.2s; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; padding: 10px; background: #e2e8f0; border-radius: 6px; align-items: center; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
         .btn-blue { background: #3182ce; }
         .btn-green { background: #38a169; }
-        .btn-purple { background: #805ad5; }
         .btn-red { background: #e53e3e; }
-        .btn:hover { opacity: 0.9; }
-        .content { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
-        @media (max-width: 850px) { .content { grid-template-columns: 1fr; } }
-        .panel { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; min-height: 450px; }
-        pre { background: #1a202c; color: #cbd5e0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 13px; overflow: auto; height: 100%; border: 1px solid #4a5568; }
-        .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f7fafc; padding: 6px; border-radius: 5px; border: 1px solid #edf2f7; }
-        .indent { margin-left: 25px; border-left: 2px solid #cbd5e1; padding-left: 15px; margin-bottom: 12px; }
-        input { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; }
-        .key-input { width: 130px; font-weight: bold; color: #2d3748; background: #fff; }
+        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 800px) { .content { grid-template-columns: 1fr; } }
+        .panel { border: 1px solid #cbd5e0; border-radius: 6px; padding: 15px; background: #fff; }
+        pre { background: #2d3748; color: #edf2f7; padding: 15px; border-radius: 6px; overflow: auto; height: 100%; font-family: monospace; }
+        .row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+        .indent { margin-left: 20px; border-left: 2px solid #e2e8f0; padding-left: 10px; margin-top: 5px; margin-bottom: 10px; }
+        input { padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
+        .key-input { width: 120px; background: #f7fafc; font-weight: bold; }
         .val-input { flex: 1; }
-        .del { color: #e53e3e; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 18px; padding: 0 5px; }
-        .setup-box { text-align: center; padding: 60px 0; border: 2px dashed #cbd5e1; border-radius: 12px; }
-        .inner-actions { display: flex; gap: 8px; margin-top: 5px; margin-bottom: 15px; }
+        .delete-btn { color: #e53e3e; cursor: pointer; font-weight: bold; border: none; background: none; font-size: 16px; }
+        .empty-msg { text-align: center; padding: 40px; border: 2px dashed #e2e8f0; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="mainToolbar" class="toolbar"></div>
-
     <div class="content">
         <div class="panel">
-            <h3 style="margin-bottom:15px; color: #4a5568;">Editor Visual</h3>
+            <h4 style="margin-bottom:10px">Estructura Visual</h4>
             <div id="editor"></div>
         </div>
         <div class="panel">
-            <h3 style="margin-bottom:15px; color: #4a5568;">Vista JSON</h3>
+            <h4 style="margin-bottom:10px">Código JSON</h4>
             <pre id="jsonOutput"></pre>
         </div>
     </div>
@@ -51,7 +47,7 @@ const app = {
     data: null,
 
     init() {
-        const saved = localStorage.getItem('json_pro_data');
+        const saved = localStorage.getItem('json_final_v5');
         if (saved && saved !== "null") {
             try { this.data = JSON.parse(saved); } catch(e) { this.data = null; }
         }
@@ -70,41 +66,36 @@ const app = {
 
         if (this.data === null) {
             editor.innerHTML = `
-                <div class="setup-box">
-                    <h2 style="margin-bottom:10px">Nuevo Archivo JSON</h2>
-                    <p style="color:#718096; margin-bottom:20px">Elige la estructura raíz para comenzar:</p>
-                    <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Crear Objeto</button>
-                    <button class="btn btn-green" onclick="app.setInitial('array')">[ ] Crear Array</button>
+                <div class="empty-msg">
+                    <h3>¿Cómo empezamos?</h3><br>
+                    <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Objeto</button>
+                    <button class="btn btn-green" onclick="app.setInitial('array')">[ ] Array</button>
                 </div>`;
-            toolbar.innerHTML = `<span style="color:#a0aec0; font-size:12px">Esperando selección...</span>`;
+            toolbar.innerHTML = "Selecciona una raíz para comenzar";
             output.textContent = "null";
         } else {
-            toolbar.innerHTML = this.getActionButtons([]);
+            toolbar.innerHTML = this.getControls([]);
             toolbar.innerHTML += `<button class="btn btn-red" onclick="app.reset()" style="margin-left:auto">🗑️ Reiniciar</button>`;
             editor.innerHTML = this.buildUI(this.data, []);
             output.textContent = JSON.stringify(this.data, null, 2);
         }
-        localStorage.setItem('json_pro_data', JSON.stringify(this.data));
+        localStorage.setItem('json_final_v5', JSON.stringify(this.data));
     },
 
-    getActionButtons(path) {
+    getControls(path) {
         const p = JSON.stringify(path);
-        let target = this.data;
-        path.forEach(k => target = target[k]);
-        
         return `
-            <button class="btn btn-blue" onclick="app.addItem('value', ${p})">➕ Prop</button>
-            <button class="btn btn-green" onclick="app.addItem('object', ${p})">➕ Obj</button>
-            <button class="btn btn-purple" onclick="app.addItem('array', ${p})">➕ Array</button>
+            <button class="btn btn-blue" onclick="app.addItem('value', ${p})">+ Prop</button>
+            <button class="btn btn-green" onclick="app.addItem('object', ${p})">+ Obj</button>
+            <button class="btn btn-blue" onclick="app.addItem('array', ${p})" style="background:#805ad5">+ Array</button>
         `;
     },
 
     addItem(type, path) {
         let target = this.data;
         path.forEach(k => target = target[k]);
-
-        const newVal = (type === 'object') ? {} : (type === 'array' ? [] : "valor");
-
+        const newVal = (type === 'object') ? {} : (type === 'array' ? [] : "...");
+        
         if (Array.isArray(target)) {
             target.push(newVal);
         } else {
@@ -150,22 +141,21 @@ const app = {
             
             html += `<div class="row">`;
             if (isArray) {
-                html += `<span style="color:#a0aec0; width:25px; font-size:11px">[${key}]</span>`;
+                html += `<span style="color:#a0aec0; width:25px">[${key}]</span>`;
             } else {
                 html += `<input type="text" class="key-input" value="${key}" onchange="app.updateKey(${pStr}, '${key}', this.value)">`;
             }
 
             if (val !== null && typeof val === 'object') {
-                html += `<button class="del" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
+                html += `<button class="delete-btn" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
                 html += `<div class="indent">`;
-                // LLAMADA RECURSIVA PARA EL CONTENIDO DEL OBJETO/ARRAY
                 html += this.buildUI(val, [...path, key]);
-                // BOTONES DE ACCIÓN PARA EL NIVEL INTERNO
-                html += `<div class="inner-actions">${this.getActionButtons([...path, key])}</div>`;
+                // AQUÍ LA CLAVE: Botones dentro de cada objeto/array
+                html += `<div style="margin-top:5px">${this.getControls([...path, key])}</div>`;
                 html += `</div>`;
             } else {
                 html += `<input type="text" class="val-input" value="${val}" onchange="app.updateValue(${pStr}, '${key}', this.value)">`;
-                html += `<button class="del" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
+                html += `<button class="delete-btn" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
             }
         }
         return html;
@@ -174,12 +164,11 @@ const app = {
     reset() {
         if (confirm("¿Borrar todo?")) {
             this.data = null;
-            localStorage.removeItem('json_pro_data');
+            localStorage.removeItem('json_final_v5');
             this.render();
         }
     }
 };
-
 app.init();
 </script>
 </body>
