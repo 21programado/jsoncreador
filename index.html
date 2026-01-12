@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Creator - Estructuras Complejas</title>
+    <title>JSON Creator Pro - Fix Total</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; padding: 10px; background: #e2e8f0; border-radius: 6px; align-items: center; }
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
-        .btn-blue { background: #3182ce; }
-        .btn-green { background: #38a169; }
-        .btn-red { background: #e53e3e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 8px; align-items: center; border: 1px solid #e2e8f0; }
+        .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 12px; color: white; transition: all 0.2s; }
+        .btn-blue { background: #2563eb; }
+        .btn-green { background: #16a34a; }
+        .btn-purple { background: #8b5cf6; }
+        .btn-red { background: #ef4444; }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
         .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 800px) { .content { grid-template-columns: 1fr; } }
-        .panel { border: 1px solid #cbd5e0; border-radius: 6px; padding: 15px; background: #fff; }
-        pre { background: #2d3748; color: #edf2f7; padding: 15px; border-radius: 6px; overflow: auto; height: 100%; font-family: monospace; }
-        .row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
-        .indent { margin-left: 20px; border-left: 2px solid #e2e8f0; padding-left: 10px; margin-top: 5px; margin-bottom: 10px; }
-        input { padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
-        .key-input { width: 120px; background: #f7fafc; font-weight: bold; }
+        @media (max-width: 900px) { .content { grid-template-columns: 1fr; } }
+        .panel { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; min-height: 500px; }
+        pre { background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 8px; overflow: auto; height: 100%; font-family: 'Fira Code', monospace; line-height: 1.5; }
+        .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; padding: 4px; border-radius: 4px; }
+        .indent { margin-left: 24px; border-left: 2px solid #e2e8f0; padding-left: 15px; margin-bottom: 15px; background: rgba(241, 245, 249, 0.4); border-radius: 0 0 0 8px; }
+        input { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; }
+        input:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+        .key-input { width: 140px; background: #fff; font-weight: bold; color: #334155; }
         .val-input { flex: 1; }
-        .delete-btn { color: #e53e3e; cursor: pointer; font-weight: bold; border: none; background: none; font-size: 16px; }
-        .empty-msg { text-align: center; padding: 40px; border: 2px dashed #e2e8f0; border-radius: 8px; }
+        .del-btn { color: #94a3b8; cursor: pointer; border: none; background: none; font-size: 18px; padding: 0 8px; transition: color 0.2s; }
+        .del-btn:hover { color: #ef4444; }
+        .inner-nav { margin-top: 8px; display: flex; gap: 6px; padding: 5px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="mainToolbar" class="toolbar"></div>
+    <div id="topToolbar" class="toolbar"></div>
     <div class="content">
         <div class="panel">
-            <h4 style="margin-bottom:10px">Estructura Visual</h4>
+            <h3 style="margin-bottom:15px; color:#1e293b">Estructura Visual</h3>
             <div id="editor"></div>
         </div>
         <div class="panel">
-            <h4 style="margin-bottom:10px">Código JSON</h4>
+            <h3 style="margin-bottom:15px; color:#1e293b">Vista JSON</h3>
             <pre id="jsonOutput"></pre>
         </div>
     </div>
@@ -47,7 +51,7 @@ const app = {
     data: null,
 
     init() {
-        const saved = localStorage.getItem('json_final_v5');
+        const saved = localStorage.getItem('json_builder_final');
         if (saved && saved !== "null") {
             try { this.data = JSON.parse(saved); } catch(e) { this.data = null; }
         }
@@ -62,60 +66,69 @@ const app = {
     render() {
         const editor = document.getElementById('editor');
         const output = document.getElementById('jsonOutput');
-        const toolbar = document.getElementById('mainToolbar');
+        const toolbar = document.getElementById('topToolbar');
 
         if (this.data === null) {
             editor.innerHTML = `
-                <div class="empty-msg">
-                    <h3>¿Cómo empezamos?</h3><br>
-                    <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Objeto</button>
-                    <button class="btn btn-green" onclick="app.setInitial('array')">[ ] Array</button>
+                <div style="text-align:center; padding:60px 20px;">
+                    <h2 style="margin-bottom:20px">¿Cómo quieres empezar?</h2>
+                    <button class="btn btn-blue" onclick="app.setInitial('object')" style="padding:15px 30px; font-size:16px">{ } Objeto</button>
+                    <button class="btn btn-green" onclick="app.setInitial('array')" style="padding:15px 30px; font-size:16px; margin-left:10px">[ ] Array</button>
                 </div>`;
-            toolbar.innerHTML = "Selecciona una raíz para comenzar";
+            toolbar.innerHTML = "Inicializa la estructura para ver los controles";
             output.textContent = "null";
         } else {
-            toolbar.innerHTML = this.getControls([]);
-            toolbar.innerHTML += `<button class="btn btn-red" onclick="app.reset()" style="margin-left:auto">🗑️ Reiniciar</button>`;
+            toolbar.innerHTML = this.getBtnHTML([]);
+            toolbar.innerHTML += `<button class="btn btn-red" onclick="app.reset()" style="margin-left:auto">🗑️ Reiniciar Todo</button>`;
             editor.innerHTML = this.buildUI(this.data, []);
             output.textContent = JSON.stringify(this.data, null, 2);
         }
-        localStorage.setItem('json_final_v5', JSON.stringify(this.data));
+        localStorage.setItem('json_builder_final', JSON.stringify(this.data));
     },
 
-    getControls(path) {
-        const p = JSON.stringify(path);
+    // Genera botones de acción para cualquier nivel
+    getBtnHTML(path) {
+        const pathStr = encodeURIComponent(JSON.stringify(path));
         return `
-            <button class="btn btn-blue" onclick="app.addItem('value', ${p})">+ Prop</button>
-            <button class="btn btn-green" onclick="app.addItem('object', ${p})">+ Obj</button>
-            <button class="btn btn-blue" onclick="app.addItem('array', ${p})" style="background:#805ad5">+ Array</button>
+            <button class="btn btn-blue" onclick="app.addItem('value', '${pathStr}')">+ Prop</button>
+            <button class="btn btn-green" onclick="app.addItem('object', '${pathStr}')">+ Obj</button>
+            <button class="btn btn-purple" onclick="app.addItem('array', '${pathStr}')">+ Array</button>
         `;
     },
 
-    addItem(type, path) {
+    addItem(type, encodedPath) {
+        const path = JSON.parse(decodeURIComponent(encodedPath));
         let target = this.data;
-        path.forEach(k => target = target[k]);
-        const newVal = (type === 'object') ? {} : (type === 'array' ? [] : "...");
-        
+        path.forEach(key => target = target[key]);
+
+        const newVal = (type === 'object') ? {} : (type === 'array' ? [] : "nuevo_valor");
+
         if (Array.isArray(target)) {
             target.push(newVal);
         } else {
-            const key = "clave_" + (Object.keys(target).length + 1);
-            target[key] = newVal;
+            const index = Object.keys(target).length + 1;
+            target[`clave_${index}`] = newVal;
         }
         this.render();
     },
 
-    updateValue(path, key, val) {
+    updateVal(encodedPath, key, val) {
+        const path = JSON.parse(decodeURIComponent(encodedPath));
         let target = this.data;
         path.forEach(k => target = target[k]);
+        
         let v = val;
-        if(v === "true") v = true; else if(v === "false") v = false; else if(!isNaN(v) && v.trim() !== "") v = Number(v);
+        if(v === "true") v = true; 
+        else if(v === "false") v = false; 
+        else if(!isNaN(v) && v.trim() !== "") v = Number(v);
+        
         target[key] = v;
         this.render();
     },
 
-    updateKey(path, oldKey, newKey) {
+    updateKey(encodedPath, oldKey, newKey) {
         if (oldKey === newKey) return;
+        const path = JSON.parse(decodeURIComponent(encodedPath));
         let target = this.data;
         path.forEach(k => target = target[k]);
         target[newKey] = target[oldKey];
@@ -123,7 +136,8 @@ const app = {
         this.render();
     },
 
-    remove(path, key) {
+    remove(encodedPath, key) {
+        const path = JSON.parse(decodeURIComponent(encodedPath));
         let target = this.data;
         path.forEach(k => target = target[k]);
         if (Array.isArray(target)) target.splice(key, 1);
@@ -134,41 +148,41 @@ const app = {
     buildUI(obj, path) {
         let html = '';
         const isArray = Array.isArray(obj);
+        const encodedPath = encodeURIComponent(JSON.stringify(path));
 
         for (let key in obj) {
             const val = obj[key];
-            const pStr = JSON.stringify(path);
             
             html += `<div class="row">`;
             if (isArray) {
-                html += `<span style="color:#a0aec0; width:25px">[${key}]</span>`;
+                html += `<span style="color:#64748b; width:30px; font-weight:bold; font-size:11px;">[${key}]</span>`;
             } else {
-                html += `<input type="text" class="key-input" value="${key}" onchange="app.updateKey(${pStr}, '${key}', this.value)">`;
+                html += `<input type="text" class="key-input" value="${key}" onchange="app.updateKey('${encodedPath}', '${key}', this.value)">`;
             }
 
             if (val !== null && typeof val === 'object') {
-                html += `<button class="delete-btn" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
+                html += `<button class="del-btn" onclick="app.remove('${encodedPath}', '${key}')">×</button></div>`;
                 html += `<div class="indent">`;
                 html += this.buildUI(val, [...path, key]);
-                // AQUÍ LA CLAVE: Botones dentro de cada objeto/array
-                html += `<div style="margin-top:5px">${this.getControls([...path, key])}</div>`;
+                html += `<div class="inner-nav">${this.getBtnHTML([...path, key])}</div>`;
                 html += `</div>`;
             } else {
-                html += `<input type="text" class="val-input" value="${val}" onchange="app.updateValue(${pStr}, '${key}', this.value)">`;
-                html += `<button class="delete-btn" onclick="app.remove(${pStr}, '${key}')">×</button></div>`;
+                html += `<input type="text" class="val-input" value="${val}" onchange="app.updateVal('${encodedPath}', '${key}', this.value)">`;
+                html += `<button class="del-btn" onclick="app.remove('${encodedPath}', '${key}')">×</button></div>`;
             }
         }
         return html;
     },
 
     reset() {
-        if (confirm("¿Borrar todo?")) {
+        if (confirm("¿Borrar todo y empezar de cero?")) {
             this.data = null;
-            localStorage.removeItem('json_final_v5');
+            localStorage.removeItem('json_builder_final');
             this.render();
         }
     }
 };
+
 app.init();
 </script>
 </body>
