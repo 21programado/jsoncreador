@@ -3,57 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Creator PWA</title>
-    <link rel="manifest" href="manifest.json">
+    <title>JSON Creator Pro</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: #667eea; padding: 15px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
+        body { font-family: system-ui, sans-serif; background: #667eea; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #eee; flex-wrap: wrap; }
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; transition: 0.2s; }
         .btn-blue { background: #3b82f6; }
         .btn-green { background: #10b981; }
-        .btn-purple { background: #8b5cf6; }
         .btn-red { background: #ef4444; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .content { grid-template-columns: 1fr; } }
-        .editor { min-height: 300px; border: 1px solid #eee; padding: 10px; border-radius: 8px; }
-        pre { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-size: 13px; overflow: auto; }
-        .property-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
-        .indent { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; margin-bottom: 10px; }
-        input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .panel { border: 1px solid #eee; border-radius: 8px; padding: 15px; min-height: 300px; }
+        pre { background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-size: 13px; overflow: auto; height: 100%; }
+        .property-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .indent { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; margin-bottom: 15px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .empty-state { text-align: center; color: #666; padding-top: 50px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="toolbar">
-        <button class="btn btn-blue" onclick="app.addProperty([])">➕ Propiedad</button>
-        <button class="btn btn-green" onclick="app.addObject([])">➕ Objeto</button>
-        <button class="btn btn-purple" onclick="app.addArray([])">➕ Array</button>
-        <button class="btn btn-red" onclick="app.clearAll()">🗑️ Limpiar</button>
-    </div>
+    <div class="toolbar" id="mainToolbar">
+        </div>
 
     <div class="content">
         <div class="panel">
-            <h3>Constructor Visual</h3>
-            <div id="editor" class="editor"></div>
+            <h3>Estructura</h3>
+            <div id="editor"></div>
         </div>
         <div class="panel">
-            <h3>JSON Generado</h3>
-            <pre id="jsonOutput">{}</pre>
+            <h3>JSON Final</h3>
+            <pre id="jsonOutput">null</pre>
         </div>
     </div>
 </div>
 
 <script>
 const app = {
-    data: {},
+    data: null, // Empezamos en null para que el usuario elija
 
     init() {
-        const saved = localStorage.getItem('pwa_json_data');
+        const saved = localStorage.getItem('pwa_json_v2');
         if (saved) {
-            try { this.data = JSON.parse(saved); } catch(e) { this.data = {}; }
+            try { this.data = JSON.parse(saved); } catch(e) { this.data = null; }
         }
         this.render();
     },
@@ -61,74 +57,53 @@ const app = {
     render() {
         const editor = document.getElementById('editor');
         const output = document.getElementById('jsonOutput');
-        editor.innerHTML = this.renderValue(this.data);
-        output.textContent = JSON.stringify(this.data, null, 2);
-        localStorage.setItem('pwa_json_data', JSON.stringify(this.data));
-    },
+        const toolbar = document.getElementById('mainToolbar');
 
-    // ESTA ES LA FUNCIÓN QUE FALTABA O ESTABA MAL CERRADA
-    renderValue(obj, path = []) {
-        let html = '';
-        if (typeof obj !== 'object' || obj === null) return String(obj);
-
-        for (let key in obj) {
-            const val = obj[key];
-            const isArray = Array.isArray(obj);
-            const pathStr = JSON.stringify(path);
-
-            html += `<div class="property-row">`;
-            if (!isArray) {
-                html += `<input type="text" style="width:100px; font-weight:bold" value="${key}" onchange="app.updateKey(${pathStr}, '${key}', this.value)">`;
-            } else {
-                html += `<span>[${key}]</span>`;
-            }
-
-            if (typeof val === 'object' && val !== null) {
-                html += `<button onclick="app.deleteProp(${pathStr}, '${key}')" style="background:none; border:none; cursor:pointer">❌</button></div>`;
-                html += `<div class="indent">`;
-                html += this.renderValue(val, [...path, key]);
-                html += `<div style="margin-top:5px; gap:5px; display:flex;">
-                            <button onclick="app.addProperty(${JSON.stringify([...path, key])})" style="font-size:10px">+ Prop</button>
-                            <button onclick="app.addObject(${JSON.stringify([...path, key])})" style="font-size:10px">+ Obj</button>
-                         </div>`;
-                html += `</div>`;
-            } else {
-                html += `<input type="text" style="flex:1" value="${val}" onchange="app.updateValue(${pathStr}, '${key}', this.value)">`;
-                html += `<button onclick="app.deleteProp(${pathStr}, '${key}')" style="background:none; border:none; cursor:pointer">❌</button></div>`;
-            }
+        // Si no hay datos, mostrar selector inicial
+        if (this.data === null) {
+            editor.innerHTML = `<div class="empty-state">
+                <p>¿Cómo quieres empezar tu JSON?</p><br>
+                <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Objeto</button>
+                <button class="btn btn-green" onclick="app.setInitial('array')">[ ] Array</button>
+            </div>`;
+            toolbar.innerHTML = `<button class="btn btn-red" disabled>🗑️ Limpiar</button>`;
+            output.textContent = "null";
+        } else {
+            toolbar.innerHTML = `
+                <button class="btn btn-blue" onclick="app.addItem('value', [])">➕ Propiedad</button>
+                <button class="btn btn-green" onclick="app.addItem('object', [])">➕ Objeto</button>
+                <button class="btn btn-blue" onclick="app.addItem('array', [])">➕ Array</button>
+                <button class="btn btn-red" onclick="app.clearAll()">🗑️ Reset</button>
+            `;
+            editor.innerHTML = this.buildUI(this.data);
+            output.textContent = JSON.stringify(this.data, null, 2);
         }
-        return html || '<p style="color:gray">Vacío. Agregue un elemento arriba.</p>';
+        localStorage.setItem('pwa_json_v2', JSON.stringify(this.data));
     },
 
-    addProperty(path) {
-        let target = this.getTarget(path);
-        if (Array.isArray(target)) target.push("valor");
-        else target["prop_" + Date.now().toString().slice(-3)] = "valor";
+    setInitial(type) {
+        this.data = type === 'object' ? {} : [];
         this.render();
     },
 
-    addObject(path) {
-        let target = this.getTarget(path);
-        if (Array.isArray(target)) target.push({});
-        else target["obj_" + Date.now().toString().slice(-3)] = {};
-        this.render();
-    },
+    addItem(type, path) {
+        let target = this.data;
+        path.forEach(k => target = target[k]);
 
-    addArray(path) {
-        let target = this.getTarget(path);
-        if (Array.isArray(target)) target.push([]);
-        else target["arr_" + Date.now().toString().slice(-3)] = [];
-        this.render();
-    },
+        const newVal = type === 'object' ? {} : (type === 'array' ? [] : "valor");
 
-    getTarget(path) {
-        let current = this.data;
-        path.forEach(k => current = current[k]);
-        return current;
+        if (Array.isArray(target)) {
+            target.push(newVal);
+        } else {
+            const key = "clave_" + Math.floor(Math.random()*1000);
+            target[key] = newVal;
+        }
+        this.render();
     },
 
     updateValue(path, key, val) {
-        let target = this.getTarget(path);
+        let target = this.data;
+        path.forEach(k => target = target[k]);
         if (val === "true") val = true;
         else if (val === "false") val = false;
         else if (!isNaN(val) && val !== "") val = Number(val);
@@ -137,26 +112,60 @@ const app = {
     },
 
     updateKey(path, oldKey, newKey) {
-        if (oldKey === newKey) return;
-        let target = this.getTarget(path);
+        let target = this.data;
+        path.forEach(k => target = target[k]);
         target[newKey] = target[oldKey];
         delete target[oldKey];
         this.render();
     },
 
     deleteProp(path, key) {
-        let target = this.getTarget(path);
+        let target = this.data;
+        path.forEach(k => target = target[k]);
         if (Array.isArray(target)) target.splice(key, 1);
         else delete target[key];
         this.render();
     },
 
+    buildUI(obj, path = []) {
+        let html = '';
+        const isArray = Array.isArray(obj);
+
+        for (let key in obj) {
+            const val = obj[key];
+            const pStr = JSON.stringify(path);
+            
+            html += `<div class="property-row">`;
+            if (!isArray) {
+                html += `<input type="text" style="width:110px; font-weight:bold" value="${key}" onchange="app.updateKey(${pStr}, '${key}', this.value)">`;
+            } else {
+                html += `<span style="color:#888">[${key}]</span>`;
+            }
+
+            if (typeof val === 'object' && val !== null) {
+                html += `<button onclick="app.deleteProp(${pStr}, '${key}')" style="border:none; background:none; cursor:pointer">❌</button></div>`;
+                html += `<div class="indent">`;
+                html += this.buildUI(val, [...path, key]);
+                html += `<div style="display:flex; gap:5px">
+                    <button onclick="app.addItem('value', ${JSON.stringify([...path, key])})" style="font-size:11px">+ Val</button>
+                    <button onclick="app.addItem('object', ${JSON.stringify([...path, key])})" style="font-size:11px">+ Obj</button>
+                </div></div>`;
+            } else {
+                html += `<input type="text" style="flex:1" value="${val}" onchange="app.updateValue(${pStr}, '${key}', this.value)">`;
+                html += `<button onclick="app.deleteProp(${pStr}, '${key}')" style="border:none; background:none; cursor:pointer">❌</button></div>`;
+            }
+        }
+        return html;
+    },
+
     clearAll() {
-        if (confirm("¿Borrar todo?")) { this.data = {}; this.render(); }
+        if (confirm("¿Reiniciar aplicación?")) {
+            this.data = null;
+            this.render();
+        }
     }
 };
 
-// Arrancar la app
 app.init();
 </script>
 </body>
