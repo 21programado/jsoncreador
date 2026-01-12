@@ -9,7 +9,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Segoe UI,Tahoma;background:#f8fafc;padding:20px}
 .container{max-width:1200px;margin:auto;background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
-.toolbar{display:flex;gap:10px;margin-bottom:20px;padding:12px;background:#f1f5f9;border-radius:8px;border:1px solid #e2e8f0;align-items:center}
+.toolbar{display:flex;gap:10px;margin-bottom:20px;padding:12px;background:#f1f5f9;border-radius:8px;border:1px solid #e2e8f0;align-items:center;min-height:44px}
 .btn{padding:8px 12px;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:12px;color:#fff}
 .btn-blue{background:#2563eb}
 .btn-green{background:#16a34a}
@@ -57,11 +57,8 @@ const app = {
     init(){
         const saved = localStorage.getItem("json_builder");
         if(saved && saved !== "null"){
-            try{
-                this.data = JSON.parse(saved);
-            }catch{
-                this.data = null;
-            }
+            try{ this.data = JSON.parse(saved); }
+            catch{ this.data = null; }
         }
         this.render();
     },
@@ -81,21 +78,24 @@ const app = {
     },
 
     render(){
+        const bar = document.getElementById("topToolbar");
         const editor = document.getElementById("editor");
         const out = document.getElementById("jsonOutput");
-        const bar = document.getElementById("topToolbar");
 
+        bar.innerHTML = "";
+        editor.innerHTML = "";
+        out.textContent = "";
+
+        // 🔹 Estado inicial
         if(this.data === null){
-            editor.innerHTML = `
-                <div style="text-align:center;padding:40px">
-                    <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Objeto</button>
-                    <button class="btn btn-green" onclick="app.setInitial('array')" style="margin-left:10px">[ ] Array</button>
-                </div>`;
-            bar.textContent = "Inicializa la estructura";
-            out.textContent = "";
+            bar.innerHTML = `
+                <button class="btn btn-blue" onclick="app.setInitial('object')">{ } Objeto</button>
+                <button class="btn btn-green" onclick="app.setInitial('array')">[ ] Array</button>
+            `;
             return;
         }
 
+        // 🔹 Estado con datos
         bar.innerHTML = `
             ${this.btns([])}
             <button class="btn btn-gray" onclick="app.download()">⬇ Descargar JSON</button>
@@ -162,7 +162,7 @@ const app = {
             if(v && typeof v === "object"){
                 h += `<button class="del-btn" onclick="app.remove('${ep}','${k}')">×</button></div>`;
                 h += `<div class="indent">${this.ui(v,[...path,k])}<div class="inner-nav">${this.btns([...path,k])}</div></div>`;
-            }else{
+            } else {
                 h += `<input class="val-input" value="${v}" onchange="app.updateVal('${ep}','${k}',this.value)">`;
                 h += `<button class="del-btn" onclick="app.remove('${ep}','${k}')">×</button></div>`;
             }
@@ -171,10 +171,7 @@ const app = {
     },
 
     download(){
-        const blob = new Blob(
-            [JSON.stringify(this.data, null, 2)],
-            {type:"application/json"}
-        );
+        const blob = new Blob([JSON.stringify(this.data, null, 2)],{type:"application/json"});
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "data.json";
@@ -183,7 +180,7 @@ const app = {
     },
 
     import(){
-        document.getElementById("fileInput").value = "";
+        document.getElementById("fileInput").value="";
         document.getElementById("fileInput").click();
     },
 
@@ -197,8 +194,8 @@ const app = {
 };
 
 document.getElementById("fileInput").addEventListener("change", e=>{
-    const file = e.target.files[0];
-    if(!file) return;
+    const f = e.target.files[0];
+    if(!f) return;
     const r = new FileReader();
     r.onload = ev=>{
         try{
@@ -208,7 +205,7 @@ document.getElementById("fileInput").addEventListener("change", e=>{
             alert("JSON inválido");
         }
     };
-    r.readAsText(file);
+    r.readAsText(f);
 });
 
 app.init();
