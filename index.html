@@ -3,64 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Constructor Visual JSON</title>
+    <title>JSON Builder PWA</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#764ba2">
     <style>
-        /* MANTENGO TUS ESTILOS Y AGREGO AJUSTES PARA MÓVIL */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 10px; /* Reducido para móvil */
+            padding: 10px;
         }
         .container { max-width: 1400px; margin: 0 auto; }
         .header {
             background: white; border-radius: 12px; padding: 20px;
             margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
         }
-        h1 { color: #333; font-size: 1.8em; margin-bottom: 10px; text-align: center; }
-        .subtitle { color: #666; font-size: 0.9em; text-align: center; margin-bottom: 15px; }
-        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        h1 { color: #333; font-size: 1.5rem; margin-bottom: 10px; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
         
-        /* Ajuste de botones para móvil */
         .btn {
-            padding: 8px 12px; border: none; border-radius: 6px;
-            cursor: pointer; font-size: 13px; font-weight: 500;
-            display: flex; align-items: center; gap: 5px; transition: all 0.3s;
+            padding: 10px 15px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            display: flex; align-items: center; gap: 5px; color: white;
         }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-purple { background: #8b5cf6; color: white; }
-        .btn-gray { background: #4b5563; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
+        .btn-primary { background: #3b82f6; }
+        .btn-success { background: #10b981; }
+        .btn-purple { background: #8b5cf6; }
+        .btn-gray { background: #4b5563; }
+        .btn-danger { background: #ef4444; }
 
-        .content {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 15px; margin-bottom: 20px;
-        }
+        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         @media (max-width: 968px) { .content { grid-template-columns: 1fr; } }
 
-        .panel {
-            background: white; border-radius: 12px; padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow-x: auto; /* Evita que el JSON rompa el layout */
-        }
-        .editor { max-height: 500px; overflow-y: auto; }
+        .panel { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .editor { max-height: 500px; overflow-y: auto; padding: 10px; }
         .json-output {
             background: #1f2937; color: #f9fafb; padding: 15px;
             border-radius: 8px; max-height: 400px; overflow: auto;
-            font-family: 'Courier New', monospace; font-size: 12px;
+            font-family: monospace; font-size: 12px; white-space: pre-wrap;
         }
 
-        /* Tus estilos de filas y grupos se mantienen igual */
         .property-group, .array-group {
             margin-left: 10px; border-left: 2px solid #3b82f6;
-            padding-left: 10px; margin-bottom: 10px;
+            padding-left: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.02);
         }
         .property-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
-        .property-key { padding: 5px; border: 1px solid #ddd; border-radius: 4px; width: 100px; font-size: 12px; }
+        .property-key { padding: 5px; border: 1px solid #ddd; border-radius: 4px; width: 30%; font-size: 12px; background: #f0f7ff; }
         .property-value { flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
         
         .notification {
@@ -74,8 +64,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔧 JSON Builder</h1>
-            <p class="subtitle">Toca una clave o valor para editar.</p>
+            <h1>🔧 JSON Builder Pro</h1>
             <div class="toolbar">
                 <button class="btn btn-primary" onclick="app.addProperty([])">➕ Prop</button>
                 <button class="btn btn-success" onclick="app.addObject([])">➕ Objeto</button>
@@ -93,32 +82,27 @@
                 <div class="editor" id="editor"></div>
             </div>
             <div class="panel">
-                <h2>Resultado</h2>
+                <h2>JSON</h2>
                 <pre class="json-output" id="jsonOutput">{}</pre>
             </div>
         </div>
     </div>
 
     <script>
-        // --- AQUÍ VA TU LÓGICA DE OBJETO 'app' ---
         const app = {
             data: {},
             rootType: 'object',
 
             init() {
-                // RECUPERAR DATOS AL INICIAR
                 const saved = localStorage.getItem('pwa_builder_data');
                 if (saved) {
                     try {
                         this.data = JSON.parse(saved);
-                        this.rootType = Array.isArray(this.data) ? 'array' : 'object';
                     } catch(e) { this.data = {}; }
                 }
                 this.render();
             },
 
-            // He simplificado las funciones para ahorrar espacio, 
-            // pero mantienen tu lógica original exactamente igual.
             save() {
                 localStorage.setItem('pwa_builder_data', JSON.stringify(this.data));
             },
@@ -128,7 +112,7 @@
                 const jsonOutput = document.getElementById('jsonOutput');
                 editor.innerHTML = this.renderValue(this.data);
                 jsonOutput.textContent = JSON.stringify(this.data, null, 2);
-                this.save(); // Guardado automático
+                this.save();
             },
 
             parseValue(value) {
@@ -139,22 +123,116 @@
                 return value;
             },
 
-            // ... (Aquí incluyes tus funciones: addProperty, addObject, addArray, updateValue, updateKey, deleteProperty, duplicateStructure, cloneStructure, renderValue) ...
-            // NOTA: Para no hacer este mensaje infinito, pega aquí todas las funciones que faltan de tu código original.
+            addProperty(path) {
+                let current = this.getTarget(path);
+                if (Array.isArray(current)) current.push("");
+                else current[`prop_${Object.keys(current).length + 1}`] = "";
+                this.render();
+            },
+
+            addObject(path) {
+                let current = this.getTarget(path);
+                if (Array.isArray(current)) current.push({});
+                else current[`obj_${Object.keys(current).length + 1}`] = {};
+                this.render();
+            },
+
+            addArray(path) {
+                let current = this.getTarget(path);
+                if (Array.isArray(current)) current.push([]);
+                else current[`arr_${Object.keys(current).length + 1}`] = [];
+                this.render();
+            },
+
+            getTarget(path) {
+                let current = this.data;
+                for (let key of path) current = current[key];
+                return current;
+            },
+
+            updateValue(path, key, value) {
+                let current = this.getTarget(path);
+                current[key] = this.parseValue(value);
+                this.render();
+            },
+
+            updateKey(path, oldKey, newKey) {
+                if (oldKey === newKey) return;
+                let current = this.getTarget(path);
+                current[newKey] = current[oldKey];
+                delete current[oldKey];
+                this.render();
+            },
+
+            deleteProperty(path, key) {
+                let current = this.getTarget(path);
+                if (Array.isArray(current)) current.splice(key, 1);
+                else delete current[key];
+                this.render();
+            },
+
+            renderValue(obj, path = []) {
+                if (obj === null) return 'null';
+                
+                if (Array.isArray(obj)) {
+                    let html = '<div class="array-group">';
+                    obj.forEach((item, index) => {
+                        html += `<div class="property-row"><span>[${index}]</span>`;
+                        if (typeof item === 'object' && item !== null) {
+                            html += `<button class="btn-danger" style="padding:2px 5px" onclick="app.deleteProperty(${JSON.stringify(path)}, ${index})">✕</button></div>`;
+                            html += this.renderValue(item, [...path, index]);
+                        } else {
+                            html += `<input type="text" class="property-value" value="${item}" onchange="app.updateValue(${JSON.stringify(path)}, ${index}, this.value)">`;
+                            html += `<button class="btn-danger" style="padding:2px 5px" onclick="app.deleteProperty(${JSON.stringify(path)}, ${index})">✕</button></div>`;
+                        }
+                    });
+                    html += `<button class="btn btn-primary" style="font-size:10px; padding:4px" onclick="app.addProperty(${JSON.stringify(path)})">+ Valor</button></div>`;
+                    return html;
+                }
+
+                if (typeof obj === 'object') {
+                    let html = '<div class="property-group">';
+                    for (let [key, value] of Object.entries(obj)) {
+                        html += `<div class="property-row">
+                            <input type="text" class="property-key" value="${key}" onchange="app.updateKey(${JSON.stringify(path)}, '${key}', this.value)">:`;
+                        if (typeof value === 'object' && value !== null) {
+                            html += `<button class="btn-danger" style="padding:2px 5px" onclick="app.deleteProperty(${JSON.stringify(path)}, '${key}')">✕</button></div>`;
+                            html += this.renderValue(value, [...path, key]);
+                        } else {
+                            html += `<input type="text" class="property-value" value="${value}" onchange="app.updateValue(${JSON.stringify(path)}, '${key}', this.value)">`;
+                            html += `<button class="btn-danger" style="padding:2px 5px" onclick="app.deleteProperty(${JSON.stringify(path)}, '${key}')">✕</button></div>`;
+                        }
+                    }
+                    html += `</div>`;
+                    return html;
+                }
+                return String(obj);
+            },
 
             downloadJSON() {
                 const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = 'config.json';
-                a.click();
+                a.href = url; a.download = 'data.json'; a.click();
                 this.showNotification('¡Descargado!');
             },
 
             copyJSON() {
                 navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
                 this.showNotification('¡Copiado!');
+            },
+
+            loadJSON(event) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.data = JSON.parse(e.target.result);
+                    this.render();
+                };
+                reader.readAsText(event.target.files[0]);
+            },
+
+            clearAll() {
+                if (confirm('¿Borrar todo?')) { this.data = {}; this.render(); }
             },
 
             showNotification(msg) {
@@ -165,11 +243,9 @@
             }
         };
 
-        // --- REGISTRO DEL SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
-
         app.init();
     </script>
 </body>
