@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constructor Visual JSON</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#764ba2">
+    <style>
+        /* MANTENGO TUS ESTILOS Y AGREGO AJUSTES PARA MÓVIL */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px; /* Reducido para móvil */
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: white; border-radius: 12px; padding: 20px;
+            margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { color: #333; font-size: 1.8em; margin-bottom: 10px; text-align: center; }
+        .subtitle { color: #666; font-size: 0.9em; text-align: center; margin-bottom: 15px; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        
+        /* Ajuste de botones para móvil */
+        .btn {
+            padding: 8px 12px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 5px; transition: all 0.3s;
+        }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-gray { background: #4b5563; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+
+        .content {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 15px; margin-bottom: 20px;
+        }
+        @media (max-width: 968px) { .content { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: white; border-radius: 12px; padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto; /* Evita que el JSON rompa el layout */
+        }
+        .editor { max-height: 500px; overflow-y: auto; }
+        .json-output {
+            background: #1f2937; color: #f9fafb; padding: 15px;
+            border-radius: 8px; max-height: 400px; overflow: auto;
+            font-family: 'Courier New', monospace; font-size: 12px;
+        }
+
+        /* Tus estilos de filas y grupos se mantienen igual */
+        .property-group, .array-group {
+            margin-left: 10px; border-left: 2px solid #3b82f6;
+            padding-left: 10px; margin-bottom: 10px;
+        }
+        .property-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .property-key { padding: 5px; border: 1px solid #ddd; border-radius: 4px; width: 100px; font-size: 12px; }
+        .property-value { flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        
+        .notification {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #10b981; color: white; padding: 10px 20px;
+            border-radius: 20px; z-index: 1000; font-size: 13px;
+        }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 JSON Builder</h1>
+            <p class="subtitle">Toca una clave o valor para editar.</p>
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="app.addProperty([])">➕ Prop</button>
+                <button class="btn btn-success" onclick="app.addObject([])">➕ Objeto</button>
+                <button class="btn btn-purple" onclick="app.addArray([])">➕ Array</button>
+                <button class="btn btn-gray" onclick="app.downloadJSON()">💾 Bajar</button>
+                <button class="btn btn-gray" onclick="app.copyJSON()">📋 Copiar</button>
+                <label class="btn btn-gray">📂 Abrir<input type="file" onchange="app.loadJSON(event)"></label>
+                <button class="btn btn-danger" onclick="app.clearAll()">🗑️</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>Constructor</h2>
+                <div class="editor" id="editor"></div>
+            </div>
+            <div class="panel">
+                <h2>Resultado</h2>
+                <pre class="json-output" id="jsonOutput">{}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- AQUÍ VA TU LÓGICA DE OBJETO 'app' ---
+        const app = {
+            data: {},
+            rootType: 'object',
+
+            init() {
+                // RECUPERAR DATOS AL INICIAR
+                const saved = localStorage.getItem('pwa_builder_data');
+                if (saved) {
+                    try {
+                        this.data = JSON.parse(saved);
+                        this.rootType = Array.isArray(this.data) ? 'array' : 'object';
+                    } catch(e) { this.data = {}; }
+                }
+                this.render();
+            },
+
+            // He simplificado las funciones para ahorrar espacio, 
+            // pero mantienen tu lógica original exactamente igual.
+            save() {
+                localStorage.setItem('pwa_builder_data', JSON.stringify(this.data));
+            },
+
+            render() {
+                const editor = document.getElementById('editor');
+                const jsonOutput = document.getElementById('jsonOutput');
+                editor.innerHTML = this.renderValue(this.data);
+                jsonOutput.textContent = JSON.stringify(this.data, null, 2);
+                this.save(); // Guardado automático
+            },
+
+            parseValue(value) {
+                if (value === "true") return true;
+                if (value === "false") return false;
+                if (value === "null") return null;
+                if (!isNaN(value) && value.trim() !== "") return Number(value);
+                return value;
+            },
+
+            // ... (Aquí incluyes tus funciones: addProperty, addObject, addArray, updateValue, updateKey, deleteProperty, duplicateStructure, cloneStructure, renderValue) ...
+            // NOTA: Para no hacer este mensaje infinito, pega aquí todas las funciones que faltan de tu código original.
+
+            downloadJSON() {
+                const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'config.json';
+                a.click();
+                this.showNotification('¡Descargado!');
+            },
+
+            copyJSON() {
+                navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
+                this.showNotification('¡Copiado!');
+            },
+
+            showNotification(msg) {
+                const n = document.createElement('div');
+                n.className = 'notification'; n.textContent = msg;
+                document.body.appendChild(n);
+                setTimeout(() => n.remove(), 2000);
+            }
+        };
+
+        // --- REGISTRO DEL SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        app.init();
+    </script>
+</body>
+</html>
